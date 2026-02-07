@@ -2,555 +2,259 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base target="_top">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discharge Summary v2.2 - Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Discharge Summary</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary-color: #0056b3; --bg-color: #f4f4f4; --border-color: #ccc; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
-        #customModalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .custom-modal { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; }
-        .modal-msg { font-size: 1.1em; margin-bottom: 20px; color: #333; }
-        .modal-actions { display: flex; justify-content: center; gap: 15px; }
-        .modal-btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'Poppins', sans-serif; min-width: 80px; }
-        .modal-yes { background: #28a745; color: white; }
-        .modal-no { background: #dc3545; color: white; }
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .spinner { border: 8px solid #f3f3f3; border-top: 8px solid var(--primary-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        :root { --primary: #0056b3; --bg: #f4f4f4; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .tab-nav { background: #333; display: flex; justify-content: center; sticky; top: 0; z-index: 1000; }
+        .tab-nav button { background: none; border: none; padding: 15px 20px; color: white; cursor: pointer; font-size: 16px; }
+        .tab-nav button.active { background: var(--primary); }
+        .panel { display: none; padding: 20px; max-width: 1100px; margin: 10px auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .panel.active { display: block; }
+        .section-header { background: #e9ecef; padding: 10px; margin: 15px 0 10px; font-weight: bold; border-left: 5px solid var(--primary); }
+        .row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; }
+        .col { flex: 1; min-width: 250px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #555; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: 'Poppins'; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-primary { background: var(--primary); }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .btn-xs { padding: 4px 8px; font-size: 11px; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .tab-nav { background: #333; overflow: hidden; display: flex; justify-content: center; position: sticky; top: 0; z-index: 1000; }
-        .tab-nav button { background-color: inherit; border: none; outline: none; cursor: pointer; padding: 14px 20px; transition: 0.3s; font-size: 16px; color: white; font-family: 'Poppins', sans-serif; }
-        .tab-nav button:hover { background-color: #555; }
-        .tab-nav button.active { background-color: var(--primary-color); }
-        .panel { display: none; padding: 20px; width: 98%; margin: 10px auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
-        .panel.active-panel { display: block; }
-        h2, h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
-        h4 { margin: 10px 0 5px; color: var(--primary-color); }
-        .section-header { background: #e9ecef; padding: 8px; margin: 15px 0 10px; font-weight: bold; border-left: 4px solid var(--primary-color); display: flex; justify-content: space-between; align-items: center; }
-        .row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 10px; }
-        .col { flex: 1; min-width: 300px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
-        .required::after { content: " *"; color: red; }
-        input, select, textarea { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        .search-dropdown-container { position: relative; width: 100%; }
-        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .dropdown-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .dropdown-item:hover { background-color: #f1f1f1; }
-        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'Poppins', sans-serif; min-width: 100px; height: 42px; display: inline-flex; justify-content: center; align-items: center; }
-        .btn-primary { background: var(--primary-color); color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-warning { background: #ffc107; color: #333; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn-view { background: #17a2b8; color: white; }
-        .btn-xs { padding: 2px 6px; font-size: 11px; height: 30px; min-width: 40px; }
-        .med-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; background: #f9f9f9; padding: 5px; border: 1px solid #eee; }
-        .master-list { margin-top: 10px; border: 1px solid #ddd; max-height: 400px; overflow-y: auto; background: #fafafa; }
-        .master-item { padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        table.master-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 5px; }
-        table.master-table th, table.master-table td { border: 1px solid #ddd; padding: 8px; text-align: left; background: white; }
-        table.master-table th { background-color: #f2f2f2; position: sticky; top: 0; }
-        .staging-area { border: 1px dashed #999; padding: 10px; background: #fffbe6; margin-bottom: 10px; border-radius: 4px; }
+        .med-row { display: flex; gap: 5px; background: #f9f9f9; padding: 5px; border: 1px solid #eee; margin-bottom: 5px; align-items: center; }
+        .search-container { position: relative; }
+        .drop-list { position: absolute; background: white; border: 1px solid #ccc; width: 100%; z-index: 100; max-height: 150px; overflow-y: auto; display: none; }
+        .drop-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .drop-item:hover { background: #eee; }
         
         @media print {
-            body { background: white; }
-            .tab-nav, .panel, #loader, #customModalOverlay { display: none !important; }
-            #print-view { display: block !important; width: 100%; font-family: 'Calibri', sans-serif; font-size: 11pt; }
-            @page { size: A4; margin: 10mm; }
-            .print-container { padding: 0; position: relative; }
-            .qr-wrapper { position: absolute; top: 0; right: 0; text-align: center; }
-            .qr-code { width: 1.8cm; height: 1.8cm; }
-            .qr-text { font-size: 7pt; font-weight: bold; display: block; }
-            .info-block { width: 100%; margin-top: 2.5cm; }
-            .header-row { display: flex; justify-content: space-between; background: #bfbfbf; padding: 8px; font-weight: bold; -webkit-print-color-adjust: exact; }
-            .info-content-row { display: flex; background: #f0f0f0; padding: 10px; -webkit-print-color-adjust: exact; }
-            .left-info, .right-info { flex: 1; }
-            .right-info { text-align: right; }
-            .ds-label { width: 180px; font-weight: bold; display: inline-block; }
-            .p-row { margin-bottom: 5px; display: flex; }
-            .iol-header-bar { background: #bfbfbf; padding: 8px; font-weight: bold; margin-top: 10px; -webkit-print-color-adjust: exact; }
-            table.print-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            table.print-table th, table.print-table td { border: 1px solid #000; padding: 6px; text-align: center; }
-            table.print-table th { background: #bfbfbf !important; -webkit-print-color-adjust: exact; }
-            .print-footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-            .footer-followup { border: 2px solid #000; padding: 10px; font-weight: bold; text-align: center; }
+            .tab-nav, .panel, #loader { display: none !important; }
+            #print-view { display: block !important; padding: 20px; font-family: sans-serif; }
+            .print-header { display: flex; justify-content: space-between; background: #ddd; padding: 10px; font-weight: bold; -webkit-print-color-adjust: exact; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid black; padding: 8px; text-align: left; }
+            th { background: #ddd !important; }
         }
         #print-view { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="customModalOverlay">
-        <div class="custom-modal">
-            <div id="modalMessage" class="modal-msg">Are you sure?</div>
-            <div class="modal-actions">
-                <button id="modalYesBtn" class="modal-btn modal-yes">Yes</button>
-                <button id="modalNoBtn" class="modal-btn modal-no">No</button>
-            </div>
-        </div>
-    </div>
-
     <div id="loader">
         <div class="spinner"></div>
-        <div id="loaderMsg" style="margin-top:20px; font-weight:bold;">Loading Data from Sheets...</div>
+        <p>Connecting to Google Sheets...</p>
     </div>
 
     <div class="tab-nav">
-        <button class="tab-btn active" onclick="openTab('entryPanel')">Entry Form</button>
-        <button class="tab-btn" onclick="openTab('dischargedListPanel')">Discharged List</button>
-        <button class="tab-btn" onclick="openTab('mastersPanel')">Masters (Settings)</button>
+        <button id="btn-entry" class="active" onclick="showTab('entry')">New Entry</button>
+        <button id="btn-list" onclick="showTab('list')">Patient Records</button>
+        <button id="btn-master" onclick="showTab('master')">Settings</button>
     </div>
 
-    <!-- 1. ENTRY PANEL -->
-    <div id="entryPanel" class="panel active-panel">
-        <h2>Discharge Summary Entry</h2>
-        <input type="hidden" id="entryUID">
-
-        <div class="section-header">Patient & Doctor Information</div>
+    <!-- ENTRY PANEL -->
+    <div id="panel-entry" class="panel active">
+        <h2>Patient Discharge Form</h2>
+        <input type="hidden" id="entry-uid">
+        
+        <div class="section-header">1. Patient Details</div>
         <div class="row">
-            <div class="col">
-                <label class="required">Patient Name</label>
-                <input type="text" id="pName">
-            </div>
-            <div class="col">
-                <label class="required">Age & Gender</label>
-                <div style="display: flex; gap: 5px;">
-                    <input type="number" id="pAge" placeholder="Age" style="flex: 1;">
-                    <div class="search-dropdown-container" style="flex: 1;">
-                        <input type="text" id="pGender" placeholder="Gender" autocomplete="off">
-                        <div id="listGender" class="dropdown-list"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <label>UHID</label>
-                <input type="text" id="pUHID">
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <label>Address</label>
-                <textarea id="pAddress" rows="1"></textarea>
-            </div>
-            <div class="col">
-                <label>Phone Number</label>
-                <input type="text" id="pPhone" maxlength="10">
-            </div>
-            <div class="col">
-                <label class="required">Select Doctor</label>
-                <div class="search-dropdown-container">
-                    <input type="text" id="selDoc" placeholder="Search Doctor..." autocomplete="off">
-                    <div id="listDoc" class="dropdown-list"></div>
-                </div>
-                <input type="hidden" id="hDocName"><input type="hidden" id="hDocDesig"><input type="hidden" id="hDocReg">
-            </div>
+            <div class="col"><label>Name</label><input type="text" id="p-name"></div>
+            <div class="col"><label>Age/Gender</label><input type="text" id="p-agegen"></div>
+            <div class="col"><label>UHID</label><input type="text" id="p-uhid"></div>
         </div>
 
-        <div class="section-header">Clinical Details</div>
-        <div style="background:#f0f0f0; padding:10px; border-radius:4px; margin-bottom:10px;">
-            <label>Load Clinical Template</label>
-            <select id="clinicalTemplateSelect" onchange="loadClinicalTemplate()"><option value="">-- Select --</option></select>
-        </div>
+        <div class="section-header">2. Clinical Information</div>
         <div class="row">
-            <div class="col">
-                <label class="required">Reason of Admission</label>
-                <div class="search-dropdown-container">
-                    <input type="text" id="selReason" autocomplete="off">
-                    <div id="listReason" class="dropdown-list"></div>
-                </div>
+            <div class="col search-container">
+                <label>Doctor</label>
+                <input type="text" id="p-doc" onfocus="showDrop('p-doc','list-doc')" placeholder="Search Doctor...">
+                <div id="list-doc" class="drop-list"></div>
+                <input type="hidden" id="p-doc-desig">
+                <input type="hidden" id="p-doc-reg">
             </div>
-            <div class="col">
-                <label class="required">Surgery Performed</label>
-                <div class="search-dropdown-container">
-                    <input type="text" id="selSurgery" autocomplete="off">
-                    <div id="listSurgery" class="dropdown-list"></div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <label class="required">Investigations</label>
-                <div class="search-dropdown-container">
-                    <input type="text" id="selInv" autocomplete="off">
-                    <div id="listInv" class="dropdown-list"></div>
-                </div>
-            </div>
-            <div class="col">
-                <label>Diagnosis (RE / LE)</label>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="selDiagRight" placeholder="Right Eye">
-                    <input type="text" id="selDiagLeft" placeholder="Left Eye">
-                </div>
-            </div>
+            <div class="col"><label>Reason</label><input type="text" id="p-reason"></div>
+            <div class="col"><label>Surgery</label><input type="text" id="p-surgery"></div>
         </div>
 
-        <div class="section-header">IOL Details</div>
+        <div class="section-header">3. Medication
+            <button class="btn btn-primary btn-xs" style="float:right" onclick="addMedRow()">+ Add Medicine</button>
+        </div>
+        <div id="med-container"></div>
+
+        <div class="section-header">4. Timings</div>
         <div class="row">
-            <div class="col"><label>IOL Name</label><input type="text" id="selIOL"></div>
-            <div class="col"><label>Serial Number</label><input type="text" id="iolSerial"></div>
-            <div class="col"><label>Power (D)</label><input type="text" id="iolPower"></div>
+            <div class="col"><label>Admission</label><input type="date" id="p-adm-d"><input type="time" id="p-adm-t"></div>
+            <div class="col"><label>Discharge</label><input type="date" id="p-dis-d"><input type="time" id="p-dis-t"></div>
         </div>
 
-        <div class="section-header">Medicines 
-            <button class="btn btn-warning btn-xs" onclick="document.getElementById('medicineRowsContainer').innerHTML=''">Clear All</button>
-        </div>
-        <div style="background:#f0f0f0; padding:10px; border-radius:4px; margin-bottom:10px; display:flex; gap:10px;">
-            <select id="medTemplateSelect" style="flex:1;"><option value="">-- Select Template --</option></select>
-            <button class="btn btn-secondary btn-xs" onclick="loadMedTemplate()">Load Template</button>
-            <button class="btn btn-primary btn-xs" onclick="addMedRow('','','','1','','','Days')">+ Add Row</button>
-        </div>
-        <div id="medicineRowsContainer"></div>
-
-        <div class="section-header">Timings & Follow-up</div>
-        <div class="row">
-            <div class="col"><label>Admission</label><input type="date" id="dateAdm"><input type="time" id="timeAdm"></div>
-            <div class="col"><label>Surgery</label><input type="date" id="dateSurg"><input type="time" id="timeSurg"></div>
-            <div class="col"><label>Discharge</label><input type="date" id="dateDisch" onchange="calcFollowUp()"><input type="time" id="timeDisch"></div>
-        </div>
-        <div class="row">
-            <div class="col"><label>Next Follow Up</label><input type="date" id="followUpDate"><input type="time" id="followUpTime" value="09:00"></div>
-        </div>
-
-        <div id="actionButtons" style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn btn-primary" style="flex:2" onclick="saveAndPrint(false)">SAVE & PRINT</button>
-            <button class="btn btn-warning" style="flex:1" onclick="resetForm()">RESET</button>
+        <div style="margin-top:20px">
+            <button class="btn btn-success" onclick="saveData()">SAVE & PRINT</button>
+            <button class="btn btn-danger" onclick="location.reload()">RESET</button>
         </div>
     </div>
 
-    <!-- 2. DISCHARGED LIST PANEL -->
-    <div id="dischargedListPanel" class="panel">
-        <h2>Patient History</h2>
-        <input type="text" id="searchList" placeholder="Search by Name/UHID..." onkeyup="renderDischargeList()" style="margin-bottom:10px;">
-        <table class="master-table">
-            <thead>
-                <tr><th>Date</th><th>Name</th><th>UHID</th><th>Doctor</th><th>IOL</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="dischargeListBody"></tbody>
+    <!-- LIST PANEL -->
+    <div id="panel-list" class="panel">
+        <h2>Record History</h2>
+        <table id="table-history" style="width:100%; border-collapse: collapse;">
+            <thead><tr style="background:#eee"><th>Date</th><th>Name</th><th>UHID</th><th>Doctor</th><th>Actions</th></tr></thead>
+            <tbody id="list-body"></tbody>
         </table>
     </div>
 
-    <!-- 3. MASTERS PANEL -->
-    <div id="mastersPanel" class="panel">
-        <h2>Settings & Master Data</h2>
+    <!-- MASTER PANEL -->
+    <div id="panel-master" class="panel">
+        <h2>Manage Masters</h2>
         <div class="row">
             <div class="col">
-                <h4>Doctors</h4>
-                <input type="text" id="mDocName" placeholder="Name">
-                <input type="text" id="mDocDesig" placeholder="Designation">
-                <input type="text" id="mDocReg" placeholder="Reg No.">
-                <button class="btn btn-success btn-xs" onclick="addMasterDoctor()">Add Doctor</button>
-                <div id="docList" class="master-list"></div>
+                <h4>Add Doctor</h4>
+                <input type="text" id="m-doc-n" placeholder="Name"><br>
+                <input type="text" id="m-doc-d" placeholder="Designation"><br>
+                <input type="text" id="m-doc-r" placeholder="Reg No"><br>
+                <button class="btn btn-primary btn-xs" onclick="masterAdd('doc')">Add</button>
             </div>
             <div class="col">
-                <h4>Clinical Dropdowns</h4>
-                <select id="mTemplateType"><option value="reason">Reasons</option><option value="surgery">Surgeries</option><option value="investigation">Investigations</option><option value="diagnosis">Diagnosis</option></select>
-                <input type="text" id="mTemplateValue" placeholder="Value...">
-                <button class="btn btn-success btn-xs" onclick="addClinicalItem()">Add Item</button>
-                <div id="clinicalList" class="master-list"></div>
+                <h4>Doctors List</h4>
+                <div id="m-doc-list" style="max-height:200px; overflow:auto"></div>
             </div>
         </div>
-        <hr>
-        <h4>Custom Print Lines</h4>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="mCustHeading" placeholder="Heading (e.g. Note)">
-            <input type="text" id="mCustText" placeholder="Content...">
-            <button class="btn btn-primary btn-xs" onclick="addCustomLine()">Add Line</button>
-        </div>
-        <div id="customLinesList" class="master-list"></div>
     </div>
 
-    <!-- PRINT VIEW -->
+    <!-- PRINT PREVIEW -->
     <div id="print-view">
-        <div class="print-container">
-            <div id="pr_qr_container" class="qr-wrapper">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=POST_OP_CARE" class="qr-code">
-                <span class="qr-text">Post-Op Care</span>
-            </div>
-            <div class="info-block">
-                <div class="header-row"><span>Patient Details</span><span>Doctor Details</span></div>
-                <div class="info-content-row">
-                    <div class="left-info">
-                        <div class="p-row"><b>Name: </b> <span id="pr_name"></span></div>
-                        <div class="p-row"><b>Age/Sex: </b> <span id="pr_agegen"></span></div>
-                        <div class="p-row"><b>UHID: </b> <span id="pr_uhid"></span></div>
-                    </div>
-                    <div class="right-info">
-                        <div id="pr_dname" style="font-weight:bold;"></div>
-                        <div id="pr_ddesig"></div>
-                    </div>
-                </div>
-            </div>
-            <h3 style="text-align:center;">DISCHARGE SUMMARY</h3>
-            <div class="p-row"><span class="ds-label">Reason:</span><span id="pr_reason"></span></div>
-            <div class="p-row"><span class="ds-label">Surgery:</span><span id="pr_surgery"></span></div>
-            <div class="p-row"><span class="ds-label">Diagnosis:</span><span id="pr_diag"></span></div>
-            <div id="pr_custom_lines"></div>
-            <div class="iol-header-bar">IOL DETAILS</div>
-            <div class="p-row" style="padding:10px;"><span id="pr_iol"></span></div>
-            <table class="print-table">
-                <thead><tr><th>Medicine</th><th>Qty</th><th>Dose</th><th>Freq</th><th>Duration</th></tr></thead>
-                <tbody id="pr_medBody"></tbody>
-            </table>
-            <div class="print-footer">
-                <div class="footer-followup">Follow Up: <br><span id="pr_followup"></span></div>
-                <div style="text-align:right;"><b>Authorized Signatory</b><br><br><span id="pr_sig"></span></div>
-            </div>
+        <div style="text-align:right">
+            <img id="pr-qr" src="" style="width:80px">
+        </div>
+        <div class="print-header"><span>Patient: <span id="pr-name"></span></span><span>UHID: <span id="pr-uhid"></span></span></div>
+        <p><b>Doctor:</b> <span id="pr-doc"></span> (<span id="pr-reg"></span>)</p>
+        <p><b>Surgery:</b> <span id="pr_surg"></span></p>
+        <table id="pr-meds">
+            <thead><tr><th>Medicine</th><th>Dose</th><th>Freq</th><th>Duration</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <div style="margin-top:50px; text-align:right">
+            <p>___________________<br>Authorized Signatory</p>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // 1. CONFIGURATION: PASTE YOUR WEB APP URL
-        // ==========================================
+        // CONFIG
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzdXlfmzNp9U9-EVPL3yQkaV43AOVAxZ25u7OA9slo5RadVpzvU6PsWv7KWDad4fYzxIA/exec";
-        
-        let store = { doctors: [], clinics: { reason:[], surgery:[], investigation:[], diagnosis:[] }, medGroups: [], clinGroups: [], discharges: [], customLines: [], config: { showQR: true } };
+        let DB = { doctors: [], discharges: [] };
 
-        window.onload = function() {
+        window.onload = () => {
             fetch(WEB_APP_URL)
                 .then(res => res.json())
                 .then(data => {
-                    populateStore(data);
+                    DB = data;
                     document.getElementById('loader').style.display = 'none';
-                })
-                .catch(err => alert("Error connecting to Google Sheets. Check WEB_APP_URL."));
+                    renderAll();
+                });
         };
 
-        // ==========================================
-        // 2. THE BRIDGE (TALKS TO GOOGLE SHEETS)
-        // ==========================================
-        function callBackend(action, payload) {
-            console.log("Calling Backend:", action, payload);
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: action, payload: payload })
-            })
-            .then(res => res.json())
-            .then(res => console.log("Server Response:", res))
-            .catch(err => console.error("Server Error:", err));
+        function showTab(t) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('panel-' + t).classList.add('active');
+            document.getElementById('btn-' + t).classList.add('active');
         }
 
-        function populateStore(data) {
-            store.doctors = data.doctors || [];
-            store.clinics = {
-                reason: data.reasons || [],
-                surgery: data.surgeries || [],
-                investigation: data.investigations || [],
-                diagnosis: data.diagnosis || []
-            };
-            store.medGroups = data.medGroups || [];
-            store.clinGroups = data.clinGroups || [];
-            store.discharges = data.discharges || [];
-            store.customLines = data.customLines || [];
+        function renderAll() {
+            // Render Doctor Dropdown
+            const list = document.getElementById('list-doc');
+            list.innerHTML = DB.doctors.map(d => `<div class="drop-item" onclick="selectDoc('${d.name}','${d.desig}','${d.reg}')">${d.name}</div>`).join('');
             
-            renderMasters();
-            populateEntryDropdowns();
-            renderDischargeList();
+            // Render Master List
+            document.getElementById('m-doc-list').innerHTML = DB.doctors.map(d => `<div>${d.name} <button onclick="deleteMaster('doc','${d.name}')">x</button></div>`).join('');
+
+            // Render History
+            document.getElementById('list-body').innerHTML = DB.discharges.map(p => `
+                <tr style="border-bottom:1px solid #eee">
+                    <td>${p.datedisch}</td><td>${p.name}</td><td>${p.uhid}</td><td>${p.doctor}</td>
+                    <td><button onclick="editEntry('${p.uid}')">Edit</button></td>
+                </tr>`).join('');
         }
 
-        function populateEntryDropdowns() {
-            const docNames = store.doctors.map(d => d.name);
-            setupSearchableDropdown('selDoc', 'listDoc', docNames, (val) => {
-                const d = store.doctors.find(x => x.name === val);
-                document.getElementById('hDocName').value = d.name;
-                document.getElementById('hDocDesig').value = d.desig;
-                document.getElementById('hDocReg').value = d.reg;
-            });
-            setupSearchableDropdown('selReason', 'listReason', store.clinics.reason);
-            setupSearchableDropdown('selSurgery', 'listSurgery', store.clinics.surgery);
-            setupSearchableDropdown('selInv', 'listInv', store.clinics.investigation);
-            setupSearchableDropdown('pGender', 'listGender', ['Male', 'Female', 'Other']);
-            
-            const mSel = document.getElementById('medTemplateSelect');
-            mSel.innerHTML = '<option value="">-- Select Template --</option>';
-            store.medGroups.forEach((g, i) => mSel.innerHTML += `<option value="${i}">${g.title}</option>`);
-
-            const cSel = document.getElementById('clinicalTemplateSelect');
-            cSel.innerHTML = '<option value="">-- Select Template --</option>';
-            store.clinGroups.forEach((g, i) => cSel.innerHTML += `<option value="${i}">${g.title}</option>`);
+        function selectDoc(n, d, r) {
+            document.getElementById('p-doc').value = n;
+            document.getElementById('p-doc-desig').value = d;
+            document.getElementById('p-doc-reg').value = r;
+            document.getElementById('list-doc').style.display = 'none';
         }
 
-        // ==========================================
-        // 3. LOGIC & SAVE FUNCTIONS
-        // ==========================================
-        function saveAndPrint(isUpdate) {
-            const pName = document.getElementById('pName').value;
-            if(!pName) return alert("Patient Name is required");
-
-            let uid = document.getElementById('entryUID').value || 'ID-' + Date.now();
-            const data = {
-                uid: uid,
-                name: pName,
-                age: document.getElementById('pAge').value,
-                gender: document.getElementById('pGender').value,
-                uhid: document.getElementById('pUHID').value,
-                phone: document.getElementById('pPhone').value,
-                address: document.getElementById('pAddress').value,
-                doctor: document.getElementById('hDocName').value,
-                docDesig: document.getElementById('hDocDesig').value,
-                docReg: document.getElementById('hDocReg').value,
-                reason: document.getElementById('selReason').value,
-                surgery: document.getElementById('selSurgery').value,
-                inv: document.getElementById('selInv').value,
-                anaesthesia: "Local", 
-                diagRight: document.getElementById('selDiagRight').value,
-                diagLeft: document.getElementById('selDiagLeft').value,
-                iolName: document.getElementById('selIOL').value,
-                iolSerial: document.getElementById('iolSerial').value,
-                iolPower: document.getElementById('iolPower').value,
-                dateAdm: document.getElementById('dateAdm').value,
-                timeAdm: document.getElementById('timeAdm').value,
-                dateSurg: document.getElementById('dateSurg').value,
-                timeSurg: document.getElementById('timeSurg').value,
-                dateDisch: document.getElementById('dateDisch').value,
-                timeDisch: document.getElementById('timeDisch').value,
-                followUpDate: document.getElementById('followUpDate').value,
-                followUpTime: document.getElementById('followUpTime').value,
-                medicines: []
-            };
-
-            document.querySelectorAll('.med-row').forEach(row => {
-                data.medicines.push({
-                    name: row.querySelector('.m-name').value,
-                    site: row.querySelector('.m-site').value,
-                    qty: row.querySelector('.m-qty').value,
-                    dose: row.querySelector('.m-dose').value,
-                    freq: row.querySelector('.m-freq').value,
-                    durNum: row.querySelector('.m-dur-num').value,
-                    durUnit: row.querySelector('.m-dur-unit').value
-                });
-            });
-
-            callBackend("saveDischarge", data);
-            fillPrintDom(data);
-            window.print();
-        }
-
-        function addMasterDoctor() {
-            const d = { name: document.getElementById('mDocName').value, desig: document.getElementById('mDocDesig').value, reg: document.getElementById('mDocReg').value };
-            if(d.name) {
-                store.doctors.push(d);
-                callBackend("saveDoctor", d);
-                renderMasters();
-            }
-        }
-
-        function addClinicalItem() {
-            const type = document.getElementById('mTemplateType').value;
-            const val = document.getElementById('mTemplateValue').value;
-            if(val) {
-                store.clinics[type].push(val);
-                callBackend("saveClinical", {type: type, val: val});
-                renderMasters();
-            }
-        }
-
-        function addCustomLine() {
-            const h = document.getElementById('mCustHeading').value;
-            const t = document.getElementById('mCustText').value;
-            if(h) {
-                store.customLines.push({id: Date.now(), heading: h, text: t, active: true});
-                callBackend("saveCustomLines", store.customLines);
-                renderMasters();
-            }
-        }
-
-        function deleteItem(type, id) {
-            if(confirm("Delete this?")) {
-                callBackend("deleteItem", {type: type, id: id});
-                setTimeout(() => window.location.reload(), 500);
-            }
-        }
-
-        // ==========================================
-        // 4. UI RENDERING
-        // ==========================================
-        function fillPrintDom(data) {
-            document.getElementById('pr_name').innerText = data.name;
-            document.getElementById('pr_agegen').innerText = data.age + " / " + data.gender;
-            document.getElementById('pr_uhid').innerText = data.uhid;
-            document.getElementById('pr_dname').innerText = data.doctor;
-            document.getElementById('pr_ddesig').innerText = data.docDesig;
-            document.getElementById('pr_reason').innerText = data.reason;
-            document.getElementById('pr_surgery').innerText = data.surgery;
-            document.getElementById('pr_diag').innerText = "RE: " + data.diagRight + " | LE: " + data.diagLeft;
-            document.getElementById('pr_iol').innerText = data.iolName + " (SN: " + data.iolSerial + ") - Power: " + data.iolPower + "D";
-            document.getElementById('pr_sig').innerText = "Dr. " + data.doctor + " (" + data.docReg + ")";
-            document.getElementById('pr_followup').innerText = data.followUpDate + " @ " + data.followUpTime;
-
-            const mb = document.getElementById('pr_medBody');
-            mb.innerHTML = '';
-            data.medicines.forEach(m => {
-                mb.innerHTML += `<tr><td>${m.name} (${m.site})</td><td>${m.qty}</td><td>${m.dose}</td><td>${m.freq}</td><td>${m.durNum} ${m.durUnit}</td></tr>`;
-            });
-        }
-
-        function renderMasters() {
-            document.getElementById('docList').innerHTML = store.doctors.map(d => `<div class="master-item"><span>${d.name}</span><button class="btn-danger btn-xs" onclick="deleteItem('doc','${d.name}')">X</button></div>`).join('');
-            const type = document.getElementById('mTemplateType').value;
-            document.getElementById('clinicalList').innerHTML = store.clinics[type].map(v => `<div class="master-item"><span>${v}</span><button class="btn-danger btn-xs" onclick="deleteItem('${type}','${v}')">X</button></div>`).join('');
-            document.getElementById('customLinesList').innerHTML = store.customLines.map(l => `<div class="master-item"><span>${l.heading}</span><button class="btn-danger btn-xs" onclick="deleteItem('custom','${l.id}')">X</button></div>`).join('');
-        }
-
-        function renderDischargeList() {
-            const search = document.getElementById('searchList').value.toLowerCase();
-            const tbody = document.getElementById('dischargeListBody');
-            tbody.innerHTML = store.discharges.filter(p => p.name.toLowerCase().includes(search)).map(p => `<tr><td>${p.dateDisch}</td><td>${p.name}</td><td>${p.uhid}</td><td>${p.doctor}</td><td>${p.iolName}</td><td><button class="btn-view btn-xs" onclick="editDischarge('${p.uid}')">Edit</button></td></tr>`).join('');
-        }
-
-        function addMedRow(n, s, q, d, f, dn, du) {
+        function addMedRow(data = {}) {
             const div = document.createElement('div');
             div.className = 'med-row';
             div.innerHTML = `
-                <input type="text" class="m-name" value="${n}" placeholder="Med Name" style="flex:2">
-                <select class="m-site" style="flex:1"><option value="RE" ${s==='RE'?'selected':''}>RE</option><option value="LE" ${s==='LE'?'selected':''}>LE</option><option value="BE" ${s==='BE'?'selected':''}>BE</option></select>
-                <input type="text" class="m-qty" value="${q}" placeholder="Qty" style="width:50px">
-                <input type="text" class="m-dose" value="${d}" placeholder="Dose" style="width:50px">
-                <input type="text" class="m-freq" value="${f}" placeholder="Freq" style="flex:1">
-                <input type="number" class="m-dur-num" value="${dn}" style="width:50px">
-                <select class="m-dur-unit" style="flex:1"><option value="Days">Days</option><option value="Weeks">Weeks</option></select>
-                <button class="btn-danger btn-xs" onclick="this.parentElement.remove()">X</button>`;
-            document.getElementById('medicineRowsContainer').appendChild(div);
+                <input type="text" class="m-n" placeholder="Medicine" value="${data.name||''}" style="flex:2">
+                <input type="text" class="m-d" placeholder="Dose" value="${data.dose||''}" style="width:70px">
+                <input type="text" class="m-f" placeholder="Freq" value="${data.freq||''}" style="width:70px">
+                <input type="text" class="m-u" placeholder="Duration" value="${data.durNum||''}" style="width:70px">
+                <button onclick="this.parentElement.remove()">x</button>
+            `;
+            document.getElementById('med-container').appendChild(div);
         }
 
-        function loadMedTemplate() {
-            const idx = document.getElementById('medTemplateSelect').value;
-            if(idx==="") return;
-            store.medGroups[idx].meds.forEach(m => addMedRow(m.name, m.site, m.qty, m.dose, m.freq, m.durNum, m.durUnit));
-        }
-
-        function openTab(id) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active-panel');
-        }
-
-        function setupSearchableDropdown(inputId, listId, data, onSelect) {
-            const input = document.getElementById(inputId);
-            const list = document.getElementById(listId);
-            input.onfocus = () => {
-                list.innerHTML = data.map(i => `<div class="dropdown-item">${i}</div>`).join('');
-                list.style.display = 'block';
+        function saveData() {
+            const uid = document.getElementById('entry-uid').value || 'ID' + Date.now();
+            const payload = {
+                uid: uid,
+                name: document.getElementById('p-name').value,
+                uhid: document.getElementById('p-uhid').value,
+                doctor: document.getElementById('p-doc').value,
+                docReg: document.getElementById('p-doc-reg').value,
+                surgery: document.getElementById('p-surgery').value,
+                datedisch: document.getElementById('p-dis-d').value,
+                medicines: []
             };
-            list.onclick = (e) => {
-                input.value = e.target.innerText;
-                list.style.display = 'none';
-                if(onSelect) onSelect(input.value);
-            };
-            document.addEventListener('click', (e) => { if(!e.target.closest('.search-dropdown-container')) list.style.display='none'; });
+            
+            document.querySelectorAll('.med-row').forEach(r => {
+                payload.medicines.push({
+                    name: r.querySelector('.m-n').value,
+                    dose: r.querySelector('.m-d').value,
+                    freq: r.querySelector('.m-f').value,
+                    durNum: r.querySelector('.m-u').value
+                });
+            });
+
+            // Send to Sheets
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: 'saveDischarge', payload: payload })
+            });
+
+            // Print
+            doPrint(payload);
         }
 
-        function calcFollowUp() {
-            const d = new Date(document.getElementById('dateDisch').value);
-            d.setDate(d.getDate() + 1);
-            document.getElementById('followUpDate').value = d.toISOString().split('T')[0];
+        function doPrint(p) {
+            document.getElementById('pr-name').innerText = p.name;
+            document.getElementById('pr-uhid').innerText = p.uhid;
+            document.getElementById('pr-doc').innerText = p.doctor;
+            document.getElementById('pr-reg').innerText = p.docReg;
+            document.getElementById('pr_surg').innerText = p.surgery;
+            document.getElementById('pr-qr').src = `https://api.qrserver.com/v1/create-qr-code/?data=${p.uhid}`;
+            
+            const tb = document.querySelector('#pr-meds tbody');
+            tb.innerHTML = p.medicines.map(m => `<tr><td>${m.name}</td><td>${m.dose}</td><td>${m.freq}</td><td>${m.durNum}</td></tr>`).join('');
+            
+            window.print();
         }
 
-        function resetForm() { if(confirm("Clear form?")) window.location.reload(); }
+        function showDrop(i, l) { document.getElementById(l).style.display = 'block'; }
+        
+        function masterAdd(type) {
+            const data = { name: document.getElementById('m-doc-n').value, desig: document.getElementById('m-doc-d').value, reg: document.getElementById('m-doc-r').value };
+            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'saveDoctor', payload: data }) });
+            alert('Saved. Refreshing app...');
+            location.reload();
+        }
     </script>
 </body>
 </html>
-
